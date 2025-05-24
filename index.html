@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login & My To-Do List</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles */
+        body {
+            font-family: 'Inter', sans-serif; /* Using Inter font */
+            background: linear-gradient(to bottom right, #f0f9ff, #e0f2fe); /* Light blue gradient background */
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            color: #1f2937; /* Dark gray text */
+        }
+        .app-container {
+            max-width: 600px; /* Increased max-width for to-do list */
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 1.5rem; /* More rounded corners */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); /* Stronger shadow */
+            padding: 2.5rem;
+            text-align: center;
+            border: 2px solid #00bcd4; /* Cyan border for overall app */
+        }
+        input {
+            transition: all 0.2s ease-in-out;
+        }
+        .button-style {
+            transition: all 0.3s ease-in-out;
+            transform: translateY(0);
+        }
+        .button-style:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .button-style:active {
+            transform: translateY(1px);
+            box-shadow: none;
+        }
+        .hidden-content {
+            display: none;
+        }
+
+        /* To-Do List Specific Styles */
+        .task-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            background-color: #f8fafc; /* Light background for tasks */
+            border-radius: 0.5rem; /* Rounded corners for task items */
+            border: 1px solid #e2e8f0; /* Light border */
+        }
+        .task-item.hidden {
+            display: none; /* Hide tasks based on filter */
+        }
+        .task-item.completed span {
+            text-decoration: line-through;
+            color: #94a3b8; /* Grey out completed tasks */
+        }
+        .task-item button {
+            transition: background-color 0.2s ease-in-out;
+        }
+        .task-item button:hover {
+            opacity: 0.8;
+        }
+        .filter-button.active {
+            background-color: #3b82f6; /* Active filter button color */
+            color: white;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="app-container">
+        <div id="auth-section">
+            <h1 id="auth-title" class="text-4xl font-extrabold text-center text-gray-900 mb-6">
+                Welcome Back!
+            </h1>
+            <p id="auth-subtitle" class="text-lg text-gray-700 mb-6">
+                Sign in to your account.
+            </p>
+
+            <div id="auth-form">
+                <div class="mb-4">
+                    <label for="username-input" class="block text-lg font-medium text-gray-700 mb-2 text-left">
+                        Username:
+                    </label>
+                    <input
+                        type="text"
+                        id="username-input"
+                        placeholder="Enter your username"
+                        class="w-full p-3 border-2 border-gray-300 rounded-lg focus:ring-4 focus:ring-cyan-500 focus:border-cyan-500 transition duration-200 ease-in-out text-gray-800 shadow-sm"
+                    >
+                </div>
+
+                <div class="mb-6">
+                    <label for="password-input" class="block text-lg font-medium text-gray-700 mb-2 text-left">
+                        Password:
+                    </label>
+                    <input
+                        type="password"
+                        id="password-input"
+                        placeholder="••••••••"
+                        class="w-full p-3 border-2 border-gray-300 rounded-lg focus:ring-4 focus:ring-cyan-500 focus:border-cyan-500 transition duration-200 ease-in-out text-gray-800 shadow-sm"
+                    >
+                </div>
+
+                <button
+                    id="submit-button"
+                    class="button-style bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg w-full text-xl mb-4"
+                >
+                    Login
+                </button>
+
+                <p class="text-center text-gray-600">
+                    <span id="toggle-text">Don't have an account?</span>
+                    <button
+                        id="toggle-auth-mode"
+                        class="text-cyan-600 hover:text-cyan-800 font-semibold focus:outline-none"
+                    >
+                        Register here.
+                    </button>
+                </p>
+            </div>
+        </div>
+
+        <div id="dashboard-section" class="hidden-content">
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">Welcome, <span id="display-username"></span>!</h2>
+            <p class="text-gray-700 mb-6">Here are your tasks:</p>
+
+            <div class="flex mb-6 space-x-3">
+                <input
+                    type="text"
+                    id="new-task-input"
+                    placeholder="Add a new task..."
+                    class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out text-gray-800 shadow-sm"
+                >
+                <button
+                    id="add-task-button"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-5 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75"
+                >
+                    Add Task
+                </button>
+            </div>
+
+            <div class="flex justify-center space-x-4 mb-6">
+                <button id="filter-all" class="filter-button py-2 px-4 rounded-lg font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 transition duration-200 ease-in-out active">All</button>
+                <button id="filter-active" class="filter-button py-2 px-4 rounded-lg font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 transition duration-200 ease-in-out">Active</button>
+                <button id="filter-completed" class="filter-button py-2 px-4 rounded-lg font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 transition duration-200 ease-in-out">Completed</button>
+            </div>
+
+            <ul id="task-list" class="space-y-3">
+                </ul>
+
+            <button
+                id="logout-button"
+                class="button-style bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg w-full text-lg mt-8"
+            >
+                Logout
+            </button>
+        </div>
+
+        <div id="message-box" class="mt-6 p-4 rounded-lg text-center text-lg hidden">
+            </div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        // Auth Section
+        const usernameInput = document.getElementById('username-input'); // Changed from email-input
+        const passwordInput = document.getElementById('password-input');
+        const submitButton = document.getElementById('submit-button');
+        const toggleAuthModeButton = document.getElementById('toggle-auth-mode');
+        const toggleTextSpan = document.getElementById('toggle-text');
+        const authTitle = document.getElementById('auth-title');
+        const authSubtitle = document.getElementById('auth-subtitle');
+        const authSection = document.getElementById('auth-section');
+
+        // Dashboard Section
+        const dashboardSection = document.getElementById('dashboard-section');
+        const displayUsername = document.getElementById('display-username');
+        const logoutButton = document.getElementById('logout-button');
+        const newTaskInput = document.getElementById('new-task-input');
+        const addTaskButton = document.getElementById('add-task-button');
+        const taskList = document.getElementById('task-list');
+        const filterAllButton = document.getElementById('filter-all');
+        const filterActiveButton = document.getElementById('filter-active');
+        const filterCompletedButton = document.getElementById('filter-completed');
+
+        // Global
+        const messageBox = document.getElementById('message-box');
+
+        // --- Mock User Data (stored in localStorage for persistence) ---
+        // In a real app with a true server, this would be handled securely on the backend.
+        const users = JSON.parse(localStorage.getItem('mockUsers')) || {};
+        let loggedInUser = null; // Stores the username of the currently logged-in user
+
+        // Ensure "utkarsh" is a pre-registered user on first load (if not already present)
+        if (!users['utkarsh']) {
+            users['utkarsh'] = { password: '1234' };
+            localStorage.setItem('mockUsers', JSON.stringify(users)); // Save immediately
+        }
+
+        // --- To-Do List State ---
+        let currentFilter = 'all'; // Default filter for tasks
+
+        // --- Utility Functions ---
+
+        // Function to display messages
+        function showMessage(msg, type = 'info') {
+            messageBox.textContent = msg;
+            messageBox.className = `mt-6 p-4 rounded-lg text-center text-lg ${type === 'error' ? 'bg-red-100 border border-red-400 text-red-700' : 'bg-green-100 border border-green-400 text-green-700'}`;
+            messageBox.classList.remove('hidden');
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 3000); // Hide message after 3 seconds
+        }
+
+        // Save mock user data to Local Storage
+        function saveUsers() {
+            localStorage.setItem('mockUsers', JSON.stringify(users));
+        }
+
+        // --- Authentication Functions (using localStorage) ---
+
+        // Handle Login
+        function handleLogin() {
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (!username || !password) {
+                showMessage('Please enter both username and password.', 'error');
+                return;
+            }
+
+            if (users[username] && users[username].password === password) {
+                loggedInUser = username;
+                showMessage(`Login successful! Welcome, ${username}!`, 'success');
+                showDashboard(username);
+                loadTasks(username); // Load tasks for the logged-in user
+            } else {
+                showMessage('Invalid username or password.', 'error');
+            }
+        }
+
+        // Handle Registration
+        function handleRegister() {
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (!username || !password) {
+                showMessage('Please enter both username and password.', 'error');
+                return;
+            }
+            if (password.length < 4) { // Simple password strength check
+                showMessage('Password must be at least 4 characters long.', 'error');
+                return;
+            }
+
+            if (users[username]) {
+                showMessage('Username already taken. Please choose another.', 'error');
+            } else {
+                users[username] = { password: password };
+                saveUsers(); // Save new user to localStorage
+                showMessage(`Account created for ${username}! You can now login.`, 'success');
+                // Switch to login mode after registration
+                switchAuthMode('login');
+                usernameInput.value = username; // Keep username in input
+                passwordInput.value = ''; // Clear password
+            }
+        }
+
+        // Handle Logout
+        function handleLogout() {
+            loggedInUser = null; // Clear logged-in user
+            showMessage('Logged out successfully.', 'info');
+            showAuthSection(); // Show login screen
+            taskList.innerHTML = ''; // Clear tasks from UI
+        }
+
+        // Toggle between Login and Register modes
+        function switchAuthMode(mode) {
+            if (mode === 'login') {
+                authTitle.textContent = 'Welcome Back!';
+                authSubtitle.textContent = 'Sign in to your account.';
+                submitButton.textContent = 'Login';
+                toggleTextSpan.textContent = "Don't have an account?";
+                toggleAuthModeButton.textContent = 'Register here.';
+                submitButton.onclick = handleLogin;
+            } else {
+                authTitle.textContent = 'Create Account';
+                authSubtitle.textContent = 'Join us and start saving notes!';
+                submitButton.textContent = 'Register';
+                toggleTextSpan.textContent = "Already have an account?";
+                toggleAuthModeButton.textContent = 'Login here.';
+                submitButton.onclick = handleRegister;
+            }
+            usernameInput.value = '';
+            passwordInput.value = '';
+            messageBox.classList.add('hidden'); // Hide message box when switching
+        }
+
+        // --- UI State Management ---
+
+        // Show Dashboard and hide Login/Register form
+        function showDashboard(username) {
+            authSection.classList.add('hidden-content');
+            dashboardSection.classList.remove('hidden-content');
+            displayUsername.textContent = username;
+            messageBox.classList.add('hidden'); // Hide message box on dashboard
+        }
+
+        // Show Login/Register form and hide Dashboard
+        function showAuthSection() {
+            authSection.classList.remove('hidden-content');
+            dashboardSection.classList.add('hidden-content');
+            usernameInput.value = '';
+            passwordInput.value = '';
+            messageBox.classList.add('hidden'); // Hide message box
+            // Ensure login mode is set when returning to auth section
+            switchAuthMode('login'); 
+        }
+
+        // --- To-Do List Functions (using localStorage) ---
+
+        // Function to create a new task item HTML element
+        function createTaskElement(taskText, isCompleted = false, taskId = null) {
+            const listItem = document.createElement('li');
+            listItem.className = `task-item ${isCompleted ? 'completed' : ''}`;
+            listItem.dataset.completed = isCompleted; // Store completion status as a data attribute
+            listItem.dataset.id = taskId || Date.now().toString(); // Assign a unique ID if not provided
+
+            const taskSpan = document.createElement('span');
+            taskSpan.textContent = taskText;
+            taskSpan.className = 'text-lg text-gray-800 flex-1 break-words pr-2';
+
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'flex space-x-2';
+
+            const completeButton = document.createElement('button');
+            completeButton.textContent = isCompleted ? 'Uncomplete' : 'Complete';
+            completeButton.className = `py-2 px-3 rounded-md text-sm font-medium transition duration-200 ease-in-out
+                                        ${isCompleted ? 'bg-yellow-500 hover:bg-yellow-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'}`;
+            completeButton.onclick = () => toggleCompleteTask(listItem);
+
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Delete';
+            deleteButton.className = `py-2 px-3 rounded-md text-sm font-medium bg-red-500 hover:bg-red-600 text-white transition duration-200 ease-in-out`;
+            deleteButton.onclick = () => deleteTask(listItem);
+
+            actionsDiv.appendChild(completeButton);
+            actionsDiv.appendChild(deleteButton);
+
+            listItem.appendChild(taskSpan);
+            listItem.appendChild(actionsDiv);
+
+            return listItem;
+        }
+
+        // Function to add a new task to localStorage
+        function addTask() {
+            const taskText = newTaskInput.value.trim();
+            if (taskText === '') {
+                showMessage('Task cannot be empty!', 'error');
+                return;
+            }
+            if (!loggedInUser) {
+                showMessage('Please log in to add tasks.', 'error');
+                return;
+            }
+
+            const newTask = { text: taskText, completed: false, id: Date.now().toString() };
+            let tasks = JSON.parse(localStorage.getItem(`todos_${loggedInUser}`)) || [];
+            tasks.push(newTask);
+            localStorage.setItem(`todos_${loggedInUser}`, JSON.stringify(tasks));
+
+            // Re-render tasks from localStorage to ensure consistency
+            loadTasks(loggedInUser); 
+            newTaskInput.value = ''; // Clear input
+            showMessage('Task added successfully!', 'success');
+        }
+
+        // Function to toggle task completion status in localStorage
+        function toggleCompleteTask(listItem) {
+            if (!loggedInUser) {
+                showMessage('Please log in to update tasks.', 'error');
+                return;
+            }
+            const taskId = listItem.dataset.id;
+            let tasks = JSON.parse(localStorage.getItem(`todos_${loggedInUser}`)) || [];
+            
+            const taskIndex = tasks.findIndex(task => task.id === taskId);
+            if (taskIndex > -1) {
+                tasks[taskIndex].completed = !tasks[taskIndex].completed;
+                localStorage.setItem(`todos_${loggedInUser}`, JSON.stringify(tasks));
+                showMessage('Task status updated!', 'success');
+                // Re-render tasks from localStorage to ensure consistency
+                loadTasks(loggedInUser); 
+            }
+        }
+
+        // Function to delete a task from localStorage
+        function deleteTask(listItem) {
+            if (!loggedInUser) {
+                showMessage('Please log in to delete tasks.', 'error');
+                return;
+            }
+            const taskId = listItem.dataset.id;
+            let tasks = JSON.parse(localStorage.getItem(`todos_${loggedInUser}`)) || [];
+            
+            const updatedTasks = tasks.filter(task => task.id !== taskId);
+            localStorage.setItem(`todos_${loggedInUser}`, JSON.stringify(updatedTasks));
+            showMessage('Task deleted!', 'success');
+            // Re-render tasks from localStorage to ensure consistency
+            loadTasks(loggedInUser); 
+        }
+
+        // Function to load tasks from Local Storage for a specific user
+        function loadTasks(username) {
+            taskList.innerHTML = ''; // Clear current tasks from UI
+            const storedTodos = localStorage.getItem(`todos_${username}`); // User-specific key
+            if (storedTodos) {
+                const tasks = JSON.parse(storedTodos);
+                tasks.forEach(task => {
+                    const taskElement = createTaskElement(task.text, task.completed, task.id);
+                    taskList.appendChild(taskElement);
+                });
+            }
+            applyFilter(currentFilter); // Apply the current filter after loading/updating
+        }
+
+        // Function to apply the selected filter (UI only, data remains in localStorage)
+        function applyFilter(filterType) {
+            currentFilter = filterType;
+
+            // Update active button styling
+            document.querySelectorAll('.filter-button').forEach(button => {
+                button.classList.remove('active');
+                button.classList.remove('bg-blue-600', 'text-white');
+                button.classList.add('bg-gray-200', 'text-gray-700');
+            });
+            document.getElementById(`filter-${filterType}`).classList.add('active', 'bg-blue-600', 'text-white');
+            document.getElementById(`filter-${filterType}`).classList.remove('bg-gray-200', 'text-gray-700');
+
+
+            taskList.querySelectorAll('.task-item').forEach(item => {
+                const isCompleted = item.dataset.completed === 'true'; // Get status from data attribute
+
+                switch (filterType) {
+                    case 'all':
+                        item.classList.remove('hidden');
+                        break;
+                    case 'active':
+                        if (isCompleted) {
+                            item.classList.add('hidden');
+                        } else {
+                            item.classList.remove('hidden');
+                        }
+                        break;
+                    case 'completed':
+                        if (!isCompleted) {
+                            item.classList.add('hidden');
+                        } else {
+                            item.classList.remove('hidden');
+                        }
+                        break;
+                }
+            });
+        }
+
+        // --- Event Listeners ---
+        submitButton.addEventListener('click', handleLogin); // Default to login
+        toggleAuthModeButton.addEventListener('click', () => {
+            // Toggle between login and register modes
+            if (submitButton.textContent === 'Login') {
+                switchAuthMode('register');
+            } else {
+                switchAuthMode('login');
+            }
+        });
+        logoutButton.addEventListener('click', handleLogout);
+        addTaskButton.addEventListener('click', addTask);
+        newTaskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addTask();
+            }
+        });
+
+        filterAllButton.addEventListener('click', () => applyFilter('all'));
+        filterActiveButton.addEventListener('click', () => applyFilter('active'));
+        filterCompletedButton.addEventListener('click', () => applyFilter('completed'));
+
+        // Allow Enter key to submit login/register form
+        usernameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                passwordInput.focus();
+            }
+        });
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                submitButton.click();
+            }
+        });
+
+        // --- Initialization on Load ---
+        window.onload = () => {
+            // Set default username and password for login
+            usernameInput.value = 'utkarsh';
+            passwordInput.value = '1234';
+            showAuthSection(); // Always start with the login screen
+        };
+    </script>
+</body>
+</html>
